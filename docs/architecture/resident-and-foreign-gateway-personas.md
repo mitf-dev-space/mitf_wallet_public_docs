@@ -1,80 +1,198 @@
 # Residents, foreign holders, and Customer Gateway personas
 
-This page describes how **resident** and **foreign** customers map to the **Customer Gateway** channels **`/v1/customer`** and **`/v1/business`**, and how **KYC** is submitted for the **authenticated user** versus a **managed employee holder**. It reflects the **mitf_wallet** product rules: public onboarding does not create foreign users; foreign identities are **business-managed**; managed-holder KYC is available on the **business** channel only.
+This page explains how **resident** and **foreign** identities interact with the **Customer Gateway** (`Masarat.Gateway.Customer.Api`): the **`/v1/customer`** and **`/v1/business`** bases (and briefly **`/v1/merchant`**), how users are **created**, how **wallets** bind **holders** and **creators**, and how **KYC** is collected for the **JWT user** versus a **managed employee**.
 
-For onboarding abuse controls (rate limits, keys, PIN policy), see [Onboarding channel hardening](../security/onboarding-channel-hardening.md). For staff-facing template admin versus runtime apps, see the **Gateway Management Web** service reference and the main repo’s Management Web README.
+It mirrors **mitf_wallet** behaviour: **public onboarding is resident-only**; **foreign users** are created through **business-managed** registration (not `OnboardingRegisterCommand` with `CustomerType=Foreign`); **managed-holder KYC** exists only under **`/v1/business`**.
+
+!!! tip "Related reading"
+    [Onboarding channel hardening](../security/onboarding-channel-hardening.md) (abuse controls), [Customer Gateway service reference](../reference/service-reference/Masarat.Gateway.Customer.Api.reference.md) (headers, hosts), [KYC API service reference](../reference/service-reference/Masarat.Kyc.Api.reference.md), and in **mitf_wallet**: `personas-and-flows.md`, `docs/solutions/kyc-user-status-vs-template.md`.
 
 ---
 
-## Terms
+## Who uses which base path?
+
+The gateway binds each registered **bank app** (`CustomerGateway:Apps[]`) to an **`AppType`** string. That type must match the **URL prefix** or the call is rejected (**403 Forbidden**): a **business** app cannot call **`/v1/customer/...`**, and a **customer** app cannot call **`/v1/business/...`**.
+
+| `AppType` (config) | Base path | Primary audience |
+| ------------------ | --------- | ---------------- |
+| `customer` | `/v1/customer` | Retail / consumer wallet apps |
+| `business` | `/v1/business` | Corporate operators (employees, self wallets, optional pools) |
+| `merchant` | `/v1/merchant` | Acceptance / POS-style apps (shared money APIs; **no** managed-holder KYC routes) |
+
+**Merchant note:** **`/v1/merchant`** exposes the same **shared** KYC routes as customer (`POST /kyc/submit`, `GET /kyc/status`) for the **authenticated merchant user** only. **`/kyc/managed/*`** is registered **only** on the **business** map — do not point merchant integrations at managed-holder KYC.
+
+---
+
+## Terms (data model)
 
 | Term | Meaning |
 | ---- | ------- |
-| **Resident** | `CustomerType.Resident` in **Users**; national ID–oriented identity. |
-| **Foreign** | `CustomerType.Foreign` in **Users**; passport / ID number as the primary identifier. |
-| **Holder** | The **Users** identity that **owns** the wallet (`UserId` on the wallet aggregate in **Wallets**). |
-| **Creator** | The user who initiated wallet creation (`CreatedByUserId`). For employee wallets, this is typically the **business operator**. |
-| **Creator management access** | When true, the creator may act on the wallet (list, fund, transactions) and, on **`/v1/business`**, call **managed-holder KYC** for that holder. |
+| **Resident** | `CustomerType.Resident` in **Users** — national ID–oriented identity for typical retail onboarding. |
+| **Foreign** | `CustomerType.Foreign` in **Users** — passport / national ID number used as the foreign holder’s primary identifier in registration APIs. |
+| **Holder** | The **Users** id that **owns** the wallet row in **Wallets** (`UserId` / holder user id on summaries). This is who the balance belongs to. |
+| **Creator** | The user id stored as **`CreatedByUserId`** on the wallet — who opened the wallet (often the **business operator** for employee wallets). |
+| **Creator management access** | A boolean on the wallet: when **true** and the creator differs from the holder, the creator remains in the **management** lane (list wallets, fund where policy allows, transactions as “manager”, **and** business-only managed KYC for that holder). |
+
+**Wallets service listing:** When a user calls “list my wallets”, the API returns wallets where they are the **holder** *or* they are the **creator** with **creator management access** enabled for that row — so operators see **employee** wallets alongside their own.
+
+---
+
+## How users become “resident” vs “foreign”
+
+```mermaid
+flowchart TB
+  subgraph allowed["Resident creation (typical)"]
+    O1[POST .../onboarding/accounts]
+    U1[Users OnboardingRegisterCommand]
+    R1[RegisterResident + wallet]
+    O1 --> U1 --> R1
+  end
+
+  subgraph rejected["Not allowed on onboarding"]
+    O2[Onboarding with CustomerType = Foreign]
+    U2[Users rejects with policy error]
+    O2 --> U2
+  end
+
+  subgraph foreignPath["Foreign holder (business context)"]
+    B1[POST /v1/business/wallets employee]
+    RF[Users RegisterForeign gRPC]
+    W1[Wallet holder = new foreign user]
+    B1 --> RF --> W1
+  end
+```
+
+| Path | Service | Result |
+| ---- | ------- | ------ |
+| **Consumer or business operator onboarding** | `POST /v1/customer/...` or `POST /v1/business/...` **`onboarding/accounts`** → **Users** | **Resident** user (and associated wallet orchestration via gateway/Users). **`CustomerType=Foreign` is invalid** for this command. |
+| **Direct Users API** (if exposed in your deployment) | Same **OnboardingRegisterCommand** semantics | Still **resident-only** for this command — do not use it to invent foreign retail sign-up. |
+| **Employee wallet with foreign holder** | **Customer gateway** business wallet creation → **Users** `RegisterForeign` (or existing holder id) | **Foreign** user created **only** in this **business-managed** flow (passport + name, etc.), then wallet with `holderType` foreign. |
+
+The exact wording of validation errors may vary by release; integrators should treat **foreign** as **unsupported** on **onboarding** and implement **business** employee flows for foreign staff.
 
 ---
 
 ## Customer persona — `/v1/customer`
 
-**Who:** Consumer banking / wallet apps (`AppType: customer`).
+### Audience
 
-**Onboarding**
+End users on a **consumer** banking app (`AppType: customer`).
 
-- `POST /v1/customer/onboarding/accounts` drives **Users** onboarding and wallet creation for a **resident** customer.
-- **`CustomerType=Foreign` is rejected** for **`OnboardingRegisterCommand`** (HTTP MassTransit onboarding and the same command on the message bus). There is no supported path to “self-register as foreign” through this unified onboarding API.
+### Onboarding (no JWT)
 
-**Wallets**
+- **`POST /v1/customer/onboarding/accounts`** — Registers a **resident** and drives initial wallet / provisioning behaviour through the gateway and **Users**.
+- **Headers:** Bank app identity (`X-App-Id`, `X-App-Key`, etc.) and optional bank override where configured — see [API reference](../reference/api.md).
+- **Do not send `CustomerType=Foreign` expecting success** — the **Users** application layer rejects it for onboarding.
 
-- **Self** — holder is the logged-in customer.
-- **Relation** — holder is another resident (e.g. family); the creator is the customer who opened the relation.
+### Wallets (JWT)
 
-**KYC (JWT = holder)**
+| Route | Purpose |
+| ----- | ------- |
+| `POST /v1/customer/wallets` | **Self** wallet — holder = JWT user. |
+| `POST /v1/customer/wallets/relations` | **Relation** wallet — holder = another **resident** you register or link; you remain the **creator** per policy. |
 
-- `POST /v1/customer/kyc/submit` and `GET /v1/customer/kyc/status` always target the **authenticated user** as the KYC subject.
-- The active **template key** comes from the wallet **classification** (resident vs foreign template fields on the classification), aligned with the holder type of the wallet being gated.
+### KYC (JWT = always the logged-in customer)
+
+| Route | Purpose |
+| ----- | ------- |
+| `POST /v1/customer/kyc/submit` | Submit field values for **`templateKey`** for the **authenticated user** only. |
+| `GET /v1/customer/kyc/status?templateKey=...` | Template shape, missing keys, cleared flag — still **only** for the **JWT user**. |
+
+There is **no** `/kyc/managed/*` on the customer base path. A parent cannot complete **KYC for a relation child** through these routes unless the product logs in **as** that child (not covered here). Product decisions for “dependent KYC” belong in a separate backlog if required.
+
+**Choosing `templateKey`:** It must align with the **wallet classification** tied to the product (e.g. `resident-standard`, `resident-employer-issued`). Wrong keys return “template not found” style errors from **KYC**.
 
 ---
 
 ## Business persona — `/v1/business`
 
-**Who:** Corporate operators (`AppType: business`).
+### Audience
 
-**Onboarding**
+Corporate **operators** (`AppType: business`).
 
-- `POST /v1/business/onboarding/accounts` registers the **operator** (resident). It does not register employees.
+### Operator onboarding (no JWT)
 
-**Employee / sub-wallets**
+- **`POST /v1/business/onboarding/accounts`** — Creates the **operator** user (resident). This is **not** bulk employee import.
 
-- `POST /v1/business/wallets` can create wallets whose **holder** is **Resident** or **Foreign** (`holderType`).
-- **New foreign holders** are created through **business-managed** registration (e.g. **Users** `RegisterForeign` when the flow provisions a new foreign employee), **not** through `OnboardingRegisterCommand` with `CustomerType=Foreign`.
+### Wallets (JWT)
 
-**KYC**
+| Route | Purpose |
+| ----- | ------- |
+| `GET /v1/business/wallets` | Lists wallets the operator may act on (self + managed rows per **Wallets** visibility rules). |
+| `POST /v1/business/wallets/self` | Operator’s own corporate wallet. |
+| `POST /v1/business/wallets` | **Employee** wallet — holder may be **Resident** or **Foreign**; may register a new user inline or attach an existing holder id per request contract. |
 
-1. **Self (operator)** — `POST /v1/business/kyc/submit` and `GET /v1/business/kyc/status` use the **JWT user** (the business operator).
+**Classification and KYC template pick:** Wallet classifications carry **resident** and **foreign** KYC template keys (and capture mode). The gateway picks the template for provisioning / KYC gating based on **holder type** and that classification — see **mitf_wallet** wallet classification model.
 
-2. **Managed holder (employee)** — routes on the **business** channel only:
-   - `POST /v1/business/kyc/managed/submit` — body: `holderUserId`, `templateKey`, `values`.
-   - `GET /v1/business/kyc/managed/status?holderUserId=...&templateKey=...`
+### KYC — two lanes
 
-   The gateway authorizes these calls only when the operator has a wallet in their **visible list** where the **holder** matches `holderUserId` and the operator is the **creator with management access** (same visibility rule as listing wallets the operator may act on).
+#### 1. Operator self (same as customer)
 
-**Template hints (seeded examples in dev)**
+| Route | Holder |
+| ----- | ------ |
+| `POST /v1/business/kyc/submit` | JWT user (the **operator**). |
+| `GET /v1/business/kyc/status?templateKey=...` | JWT user. |
 
-- Resident-oriented: `resident-standard`, `resident-employer-issued`.
-- Foreign-oriented: `foreign-standard`, `foreign-employer-issued`.
+Use this when the **bank** requires KYC on the **corporate user** themselves.
 
-Exact keys depend on **Wallet** classification configuration and **KYC** template definitions in your environment.
+#### 2. Managed employee (business only)
+
+| Route | Holder |
+| ----- | ------ |
+| `POST /v1/business/kyc/managed/submit` | Body **`holderUserId`** — must be an **employee** (or other wallet) the operator **manages**. |
+| `GET /v1/business/kyc/managed/status?holderUserId=...&templateKey=...` | Same **`holderUserId`**. |
+
+**Authorization rule (simplified):** The gateway loads wallets visible to the **JWT user** and allows managed KYC only if there exists a wallet where:
+
+- `holderUserId` equals that wallet’s **holder**, **and**
+- Either the JWT user **is** the holder (self — then you would normally use the non-managed route), **or** the wallet has **creator management access** and **`CreatedByUserId`** equals the JWT user (typical **employee** wallet created by this operator).
+
+If the operator **cannot** see a managed wallet for that holder, the gateway responds with **403** and a short **not authorized** message — not a silent empty KYC body.
+
+**Typical integrator sequence for a new foreign employee**
+
+1. `POST /v1/business/wallets` with `holderType=Foreign` and passport fields → response includes **holder user id** when registration succeeds.
+2. Resolve **`templateKey`** from your **classification** (often `foreign-standard` or `foreign-employer-issued` in dev seeds).
+3. `GET /v1/business/kyc/managed/status?holderUserId=...&templateKey=...` — read **`missingFieldKeys`**.
+4. `POST /v1/business/kyc/managed/submit` with JSON **`values`** until **`kycCleared`** (subject to manual review flags on the template).
 
 ---
 
-## Why the split exists
+## KYC service behaviour (cross-cutting)
 
-- **Compliance:** foreign identities are tied to **employer / programme context** (classification, templates, review), not anonymous self-service onboarding.
-- **Authorization:** Money movement already enforces **actor access** to wallets; managed KYC reuses the same **creator + management access** notion so operators cannot submit KYC for arbitrary user IDs.
+These rules are enforced in **Masarat.Kyc** and surface through gRPC to the gateway:
+
+- **Inactive templates** do not accept new submissions and do not report **`kycCleared`** for gating, even if an old row was approved — deprecate templates carefully.
+- **Field types** (string, date, number, boolean) are validated on submit so malformed payloads fail fast with a field-level error message.
+- **Users `KycStatus`** (coarse flag on the user aggregate) is **not** the same thing as **per-template submission state**; wallet flows rely on **KYC submission status** for the relevant template. See **mitf_wallet** `docs/solutions/kyc-user-status-vs-template.md`.
+
+---
+
+## Staff portal vs runtime apps (Management Web)
+
+**Gateway Management Web** (Blazor staff portal) is for **bank operators**: classifications, fee rules, KYC template CRUD, pending review queues, wallet search, etc. It is **not** a substitute for **customer** or **business** mobile apps:
+
+- **Sub-wallet creation for end customers** and **managed-holder KYC capture** happen through **Customer Gateway** **`/v1/business`** (and customer **`/v1/customer`** for self/relation), not through Management Web screens.
+- Staff **approve** or **reject** submissions in Management Web after data was submitted from apps (or tests).
+
+---
+
+## Money movement and “wrong wallet” confusion
+
+Transaction endpoints resolve **wallet numbers** to ids and then enforce **actor access** in **Transactions** / **Wallets** (`CanBeAccessedBy`: holder **or** creator with management access). If a **resident** app tries to fund a wallet they do not hold and do not manage, downstream checks fail with an authorization-style error — the gateway forwards the failure. When debugging, always check **wallet list** for the JWT user and whether **`creatorHasManagementAccess`** is true for that employee wallet.
+
+---
+
+## Quick integrator checklist
+
+| Check | Customer `/v1/customer` | Business `/v1/business` |
+| ----- | ---------------------- | ------------------------ |
+| Correct **`AppType`** and base URL | Required | Required |
+| Onboarding only for **resident** retail / operator | Yes | Yes |
+| Foreign **employee** | N/A (use business app) | `POST /wallets` with foreign path |
+| KYC for logged-in user | `/kyc/submit`, `/kyc/status` | Same |
+| KYC for **employee** | Not supported via managed routes | `/kyc/managed/submit`, `/kyc/managed/status` |
+| After employee create, persist **`holderUserId`** from JSON | — | Required for managed KYC |
 
 ---
 
@@ -83,9 +201,10 @@ Exact keys depend on **Wallet** classification configuration and **KYC** templat
 | Topic | Where |
 | ----- | ----- |
 | Customer Gateway host and headers | [Customer Gateway service reference](../reference/service-reference/Masarat.Gateway.Customer.Api.reference.md) |
-| Onboarding channel controls | [Onboarding channel hardening](../security/onboarding-channel-hardening.md) |
-| Users HTTP / behaviour | [Users API service reference](../reference/service-reference/Masarat.Users.Api.reference.md) |
-| KYC gRPC surface | [KYC API service reference](../reference/service-reference/Masarat.Kyc.Api.reference.md) |
-| In-repo narrative (developers) | **mitf_wallet** — `src/Masarat.Gateway/Masarat.Gateway.Customer.Api/personas-and-flows.md`, `docs/solutions/kyc-user-status-vs-template.md` |
+| Onboarding abuse and keys | [Onboarding channel hardening](../security/onboarding-channel-hardening.md) |
+| Users HTTP surface | [Users API service reference](../reference/service-reference/Masarat.Users.Api.reference.md) |
+| KYC gRPC | [KYC API service reference](../reference/service-reference/Masarat.Kyc.Api.reference.md) |
+| Wallets / summaries | [Wallets API service reference](../reference/service-reference/Masarat.Wallets.Api.reference.md) |
+| In-repo developer narrative | **mitf_wallet** — `src/Masarat.Gateway/Masarat.Gateway.Customer.Api/personas-and-flows.md` |
 
-The **mitf_wallet** repo also ships **`mobile/gateway_tester`**, a Flutter harness with guided flows that include self KYC and **managed-holder** KYC steps on the business track.
+The **mitf_wallet** repo includes **`mobile/gateway_tester`**: guided **resident** and **business** tracks with **KYC** and **managed-holder KYC** steps for manual QA against a running stack.
