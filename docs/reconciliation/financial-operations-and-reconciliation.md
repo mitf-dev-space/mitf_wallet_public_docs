@@ -322,7 +322,7 @@ Reconciliation compares **ledger entries** (our books) with **bank statement lin
 | Version | Date       | Author | Changes                                                                                                                                          |
 | ------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1.0     | —          | —      | Initial technical document                                                                                                                       |
-| 2.0     | March 2025 | —      | Restructured for Business & Finance: document control, executive summary, glossary, roles, exception handling, reporting, compliance, formatting |
+| 2.0     | May 2026 | —      | Restructured for Business & Finance: document control, executive summary, glossary, roles, exception handling, reporting, compliance, formatting |
 
 
 ---

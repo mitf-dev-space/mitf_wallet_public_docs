@@ -502,7 +502,7 @@ grpcurl -plaintext -d '{"transaction_id":"<transaction-guid>"}' \
 Used by the reconciliation job to export entries for a date range.
 
 ```bash
-grpcurl -plaintext -d '{"from_date_utc":"2025-03-12T00:00:00Z","to_date_utc":"2025-03-13T00:00:00Z"}' \
+grpcurl -plaintext -d '{"from_date_utc":"2026-03-12T00:00:00Z","to_date_utc":"2026-03-13T00:00:00Z"}' \
   localhost:5001 ledger.LedgerService/ExportEntries
 ```
 

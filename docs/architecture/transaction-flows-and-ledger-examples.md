@@ -12,7 +12,7 @@ This document shows **concrete examples** of how each transaction type (Transfer
 | ------------------ | --------------------------------------- |
 | **Document title** | Transaction Flows and Ledger Examples   |
 | **Version**        | 1.0                                     |
-| **Last updated**   | March 2025                               |
+| **Last updated**   | May 2026                                 |
 | **Audience**       | Developers, Operations, Support, Finance |
 
 ---
