@@ -2,7 +2,7 @@
 
 This page describes how **MITF Wallet** handles **Know Your Customer (KYC)** end to end: reusable **field definitions**, **templates** that bind fields with rules, **submissions** per user and template, **validation** on capture, **dynamic** coupling to **wallet classifications** and the **Customer Gateway**, and **staff approval** in **Gateway Management Web** (the bank operator portal).
 
-For **who** submits KYC on **`/v1/customer`** vs **`/v1/business`** (including managed-holder routes), see [Residents, foreign holders & gateway personas](./resident-and-foreign-gateway-personas.md). For **Users** `KycStatus` vs per-template state, see the **mitf_wallet** note `docs/solutions/kyc-user-status-vs-template.md`.
+For **which programme** collects KYC (consumer vs corporate, including employer-led capture for staff), see [Resident and foreign customers: retail vs corporate programmes](./resident-and-foreign-gateway-personas.md). For **Users** `KycStatus` vs per-template state, see the **mitf_wallet** note `docs/solutions/kyc-user-status-vs-template.md`.
 
 ---
 
@@ -154,7 +154,7 @@ When a submission lands in **Pending** and the product expects back-office workl
 
 | Topic | Link |
 | ----- | ---- |
-| Customer vs business KYC entry points | [Residents, foreign holders & gateway personas](./resident-and-foreign-gateway-personas.md) |
+| Retail vs corporate KYC entry points | [Resident and foreign customers: retail vs corporate programmes](./resident-and-foreign-gateway-personas.md) |
 | KYC gRPC reference | [KYC API service reference](../reference/service-reference/Masarat.Kyc.Api.reference.md) |
 | Management portal host | [Gateway Management Web service reference](../reference/service-reference/Masarat.Gateway.Management.Web.reference.md) |
 | Onboarding and abuse | [Onboarding channel hardening](../security/onboarding-channel-hardening.md) |

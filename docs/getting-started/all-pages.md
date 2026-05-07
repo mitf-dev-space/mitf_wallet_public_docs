@@ -51,7 +51,7 @@ Use the **sidebar** for the recommended order. This page is a **flat lookup** by
 | [Outbox and ledger consistency](../architecture/outbox-and-ledger-consistency.md) | Messaging durability, ledger ambiguity, recovery |
 | [Platform capabilities](../architecture/platform-capabilities.md) | Consistency, durability, security, observability |
 | [Production deployment](../operations/production-deployment.md) | Sizing, ports, secrets, pools, load |
-| [Residents, foreign holders & gateway personas](../architecture/resident-and-foreign-gateway-personas.md) | Customer vs business channels, onboarding foreign boundary, self vs managed-holder KYC |
+| [Resident and foreign customers (retail vs corporate)](../architecture/resident-and-foreign-gateway-personas.md) | Who signs up where, foreign only via employer, who completes KYC; links to technical refs |
 | [Reconciliation job](../reconciliation/reconciliation.md) | Daily ledger vs bank export job |
 | [Reconciliation job (service ref)](../reference/service-reference/Masarat.Reconciliation.Job.reference.md) | Reconciliation worker reference |
 | [Reconciliation reporting (service ref)](../reference/service-reference/Masarat.Reconciliation.Reporting.reference.md) | Reporting host reference |

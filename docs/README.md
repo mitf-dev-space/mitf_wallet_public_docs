@@ -29,7 +29,7 @@ We document because **integrators, auditors, risk, and our own teams** deserve t
 | **Leadership or business** at Masarat | [Platform at a glance](stakeholders/index.md) — outcomes in plain language |
 | **Navigating the site** (any role) | [Welcome & guided tours](getting-started/welcome.md) — APIs, ops, finance, and config in reading order |
 | **Integrating quickly** | [5-minute quickstart](getting-started/quickstart.md) |
-| **Customer vs business apps (resident / foreign, KYC)** | [Residents, foreign holders & gateway personas](architecture/resident-and-foreign-gateway-personas.md) |
+| **Retail vs corporate (resident & foreign customers)** | [Resident and foreign customers: retail vs corporate programmes](architecture/resident-and-foreign-gateway-personas.md) |
 | **KYC templates, validation, staff approval** | [KYC flow, validation & portal approval](architecture/kyc-flow-validation-and-portal-approval.md) |
 | **Every page in one table** | [Full A–Z index](getting-started/all-pages.md) |
 | **Release and doc updates** | [Changelog & releases](changelog.md) |

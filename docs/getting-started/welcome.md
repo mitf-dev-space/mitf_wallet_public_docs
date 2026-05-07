@@ -41,7 +41,7 @@ flowchart LR
 
 | If you are… | Read first | Then |
 | ----------- | ---------- | ---- |
-| **Building a mobile / partner integration** | [5-minute quickstart](../getting-started/quickstart.md), [API reference](../reference/api.md), [gRPC services](../reference/grpc-services.md) | [Residents / foreign / personas](../architecture/resident-and-foreign-gateway-personas.md), [Transfer backpressure](../architecture/transfer-backpressure-client-contract.md), [Domain events](../architecture/events.md) |
+| **Building a mobile / partner integration** | [5-minute quickstart](../getting-started/quickstart.md), [API reference](../reference/api.md), [gRPC services](../reference/grpc-services.md) | [Retail vs corporate (resident & foreign)](../architecture/resident-and-foreign-gateway-personas.md), [Transfer backpressure](../architecture/transfer-backpressure-client-contract.md), [Domain events](../architecture/events.md) |
 | **Running production** | [Production deployment](../operations/production-deployment.md), [Logging](../operations/logging.md) | [Reconciliation runbook](../operations/reconciliation-and-consistency-runbook.md), [Outbox contract](../architecture/outbox-and-ledger-consistency.md) |
 | **Tuning YAML / env** | [Configuration reference](../reference/configuration-reference.md) | [Service reference index](../reference/service-reference/README.md) |
 | **KYC product & staff review** | [KYC flow, validation & portal approval](../architecture/kyc-flow-validation-and-portal-approval.md) | [KYC API service ref](../reference/service-reference/Masarat.Kyc.Api.reference.md), [Management Web service ref](../reference/service-reference/Masarat.Gateway.Management.Web.reference.md) |
