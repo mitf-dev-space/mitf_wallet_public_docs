@@ -40,6 +40,7 @@ nav:
   - Architecture:
       - Platform capabilities: architecture/platform-capabilities.md
       - "Residents, foreign holders & gateway personas": architecture/resident-and-foreign-gateway-personas.md
+      - "KYC flow, validation & portal approval": architecture/kyc-flow-validation-and-portal-approval.md
       - Domain events: architecture/events.md
       - Money movement (sequence diagrams): architecture/money-movement-sequence-diagrams.md
       - Transaction flows & ledger examples: architecture/transaction-flows-and-ledger-examples.md

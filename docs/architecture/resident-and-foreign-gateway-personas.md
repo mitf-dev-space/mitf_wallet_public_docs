@@ -160,6 +160,8 @@ If the operator **cannot** see a managed wallet for that holder, the gateway res
 
 ## KYC service behaviour (cross-cutting)
 
+For the **full** KYC model (templates vs field definitions, submit validation, status API, wallet capture modes, and **Management Web** `/kyc-review` approval), see [KYC flow, validation & portal approval](./kyc-flow-validation-and-portal-approval.md).
+
 These rules are enforced in **Masarat.Kyc** and surface through gRPC to the gateway:
 
 - **Inactive templates** do not accept new submissions and do not report **`kycCleared`** for gating, even if an old row was approved — deprecate templates carefully.

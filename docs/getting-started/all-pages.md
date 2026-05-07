@@ -39,6 +39,7 @@ Use the **sidebar** for the recommended order. This page is a **flat lookup** by
 | [Gateway Management Web (service ref)](../reference/service-reference/Masarat.Gateway.Management.Web.reference.md) | Management web host |
 | [gRPC services](../reference/grpc-services.md) | RPC and message listing |
 | [KYC API (service ref)](../reference/service-reference/Masarat.Kyc.Api.reference.md) | KYC host reference |
+| [KYC flow, validation & portal approval](../architecture/kyc-flow-validation-and-portal-approval.md) | Templates, submissions, validation, gateway coupling, Management Web review queue |
 | [Ledger API (service ref)](../reference/service-reference/Masarat.Ledger.Api.reference.md) | Ledger host reference |
 | [LoadTest job (service ref)](../reference/service-reference/Masarat.LoadTest.Job.reference.md) | Load test worker reference |
 | [Load test reference runs](../load-testing/load-test-reference-runs.md) | Recorded scenarios, metrics, comparisons |
