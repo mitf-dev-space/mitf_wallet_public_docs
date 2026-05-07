@@ -26,6 +26,7 @@ Use the **sidebar** for the recommended order. This page is a **flat lookup** by
 | Page | Description |
 | ---- | ----------- |
 | [5-minute quickstart](../getting-started/quickstart.md) | Curl + auth onboarding for new integrators |
+| [Masarat customer segments (retail, business, foreign)](../getting-started/masarat-customer-segments.md) | How Masarat’s market story maps to consumer vs business channels and foreign holders |
 | [Accessibility](../accessibility.md) | Keyboard use, contrast, motion, reporting gaps |
 | [AML bridge — tenant resolution](../integrations/aml-bridge-tenant-resolution.md) | How `BankId` is resolved for FlowGuard routing |
 | [AML integration (overview)](../integrations/aml-integration.md) | Wallet → FlowGuard bridge components and config |

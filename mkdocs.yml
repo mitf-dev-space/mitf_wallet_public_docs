@@ -34,12 +34,13 @@ nav:
       - "Operations & technology": stakeholders/operations-and-technology.md
   - Getting started:
       - "5-minute quickstart": getting-started/quickstart.md
+      - "Masarat segments (retail, business, foreign)": getting-started/masarat-customer-segments.md
       - Welcome & guided tours: getting-started/welcome.md
       - Full A–Z index: getting-started/all-pages.md
   - "Changelog & releases": changelog.md
   - Architecture:
       - Platform capabilities: architecture/platform-capabilities.md
-      - "Retail vs corporate: resident & foreign customers": architecture/resident-and-foreign-gateway-personas.md
+      - "Retail, business & foreign (architecture)": architecture/resident-and-foreign-gateway-personas.md
       - "KYC flow, validation & portal approval": architecture/kyc-flow-validation-and-portal-approval.md
       - Domain events: architecture/events.md
       - Money movement (sequence diagrams): architecture/money-movement-sequence-diagrams.md

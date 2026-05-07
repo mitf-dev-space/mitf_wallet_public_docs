@@ -1,17 +1,29 @@
 # Resident and foreign customers: retail vs corporate programmes
 
-**Who this is for:** programme owners, product, compliance, and partner managers who need a **clear picture of who can be onboarded where**, how **foreign** participants enter the platform, and how **identity checks (KYC)** line up with **consumer** and **corporate** apps — without reading API specifications.
+**Who this is for:** programme owners, product, compliance, and partner managers who need a **clear picture of who can be onboarded where**, how **foreign** participants enter the platform, and how **identity checks (KYC)** line up with **retail** and **business** experiences — without reading API specifications.
 
-**In one sentence:** MITF Wallet treats **everyday retail customers** as **residents** onboarded through the **consumer** channel, while **foreign** individuals enter only as part of a **corporate-managed** relationship (for example an employee wallet), with **KYC** collected either by the **person themselves** or by their **employer’s operator**, depending on the channel.
+**Masarat context:** On [masarat.ly](https://masarat.ly/), Masarat describes **individual banking apps**, **corporate digital platforms**, merchant payment services, unified networks, and remote identity services. **MITF Wallet** implements the **wallet, ledger, gateway, and KYC** side of those stories for bank-branded programmes. A short **segment map** lives in [Masarat customer segments: retail, business, and foreign participants](../getting-started/masarat-customer-segments.md).
+
+**In one sentence:** MITF Wallet treats **retail customers** as **residents** onboarded through the **consumer** channel, while **foreign** individuals enter only as part of a **corporate-managed** relationship (for example an employee wallet), with **KYC** collected either by the **person themselves** or by their **employer’s operator**, depending on the channel.
 
 !!! tip "Need technical depth?"
     Integrators and engineers should use the [Customer Gateway service reference](../reference/service-reference/Masarat.Gateway.Customer.Api.reference.md), [KYC flow, validation & portal approval](./kyc-flow-validation-and-portal-approval.md), and the **mitf_wallet** repository’s internal `personas-and-flows.md` for routes, headers, and payloads.
 
 ---
 
-## Two ways the bank meets customers
+## Retail vs business vs foreign: how we use the words
 
-MITF Wallet exposes two main **digital experiences** (each uses its own mobile or partner app credentials so the wrong app cannot call the wrong programme):
+| Market segment | Technical channel | Plain meaning | Foreign participants here? |
+| -------------- | ----------------- | ------------- | -------------------------- |
+| **Retail / individuals** | **Consumer** (`/v1/customer`) | Domestic-style **resident** individuals: national ID–led onboarding in typical deployments; personal wallet, P2P, bills, cash-out, etc. | **No** anonymous foreign retail — shared onboarding **rejects** `CustomerType=Foreign` on this path. |
+| **Business / corporate** | **Business** (`/v1/business`) | **Company operators**: company wallets, **employee** wallets (resident **or** foreign staff), optional pooled liquidity where enabled. | **Yes** — foreign individuals appear when the **company** adds them (e.g. employee), via **business-controlled** registration and passport-style identity. |
+| **Foreign (non-resident) holders** | *Not a standalone “retail sign-up” app* | Non-resident **wallet owner** for that product, usually passport-led. | Always tied to **corporate** context (managed creation), not open **retail** self-service. |
+
+---
+
+## Two main digital experiences (plus acceptance)
+
+MITF Wallet exposes **two primary customer-facing programmes** on the Customer Gateway (each uses its own app credentials so the wrong app cannot call the wrong channel). That lines up with Masarat’s public split between **retail individual banking** and **corporate institutional banking** on [masarat.ly](https://masarat.ly/services/).
 
 | Experience | Typical user | What the bank is offering |
 | ---------- | ------------ | ------------------------- |
@@ -22,12 +34,12 @@ MITF Wallet exposes two main **digital experiences** (each uses its own mobile o
 
 ---
 
-## Resident vs foreign: what the words mean for the business
+## Resident vs foreign: glossary for policy and audit
 
 | Term | Plain meaning | Why it matters |
 | ---- | --------------- | -------------- |
-| **Resident customer** | Someone your programme treats as a **domestic** individual (national ID–led onboarding in typical deployments) | This is who **retail self-sign-up** is built for. |
-| **Foreign holder** | Someone your programme treats as **non-resident** for that wallet (often passport-led) | They **do not** appear from anonymous **retail** sign-up. They appear when the **company** adds them (for example as an **employee**). |
+| **Resident customer** | Someone your programme treats as a **domestic** individual (national ID–led onboarding in typical deployments) | This is who **retail** self-sign-up is built for. |
+| **Foreign holder** | Someone your programme treats as **non-resident** for that wallet (often passport-led) | They **do not** appear from anonymous **retail** sign-up. They appear when **corporate** adds them (for example as an **employee**). |
 | **Wallet owner** | The person whose **balance** the wallet represents | Regulations and statements attach to this person. |
 | **Who opened the wallet** | Often the **retail customer themselves**, or a **corporate operator** when the wallet is for an employee | The bank can grant **ongoing management** (fund, transact on behalf of, complete KYC) to that opener when your rules say so—typical for **employer–employee** setups. |
 
@@ -38,7 +50,7 @@ MITF Wallet exposes two main **digital experiences** (each uses its own mobile o
 1. **Retail onboarding creates residents only.**  
    The shared “open an account” journey for **consumer** and **corporate operator** apps is **not** a back door for **self-service foreign retail**. If a partner tried to force a “foreign retail” type through that journey, the platform **rejects** it—by design.
 
-2. **Foreign individuals join through the employer.**  
+2. **Foreign individuals join through corporate.**  
    When a company creates an **employee wallet** and marks the employee as **foreign**, the platform creates that person through a **business-controlled** registration path (passport-style identity), then attaches the wallet. That keeps **foreign** entry tied to **programme and employer context**—better for **compliance, audit, and support**.
 
 3. **Who completes KYC depends on who is logged in.**  
@@ -55,7 +67,7 @@ MITF Wallet exposes two main **digital experiences** (each uses its own mobile o
 ```mermaid
 flowchart LR
   subgraph retail["Retail / consumer programme"]
-    A[Person downloads consumer app]
+    A[Individual uses consumer banking app]
     B[Opens account — resident path]
     C[Gets wallet and completes own KYC]
     A --> B --> C
@@ -88,7 +100,7 @@ flowchart LR
 
 **Gateway Management Web** is the **bank’s back-office**: configure **wallet products**, **fee rules**, **KYC templates**, review **pending submissions**, search wallets and transactions.  
 
-**Consumer and corporate apps** are where **end customers and operators** actually **open accounts**, **move money**, and **submit KYC fields**. The portal **does not replace** those apps for day-one capture—it **governs** what they can collect and **decides** when manual review is satisfied.
+**Consumer and corporate apps** are where **retail customers**, **corporate operators**, and **managed holders** actually **open accounts**, **move money**, and **submit KYC fields** (according to channel rules). The portal **does not replace** those apps for day-one capture—it **governs** what they can collect and **decides** when manual review is satisfied.
 
 ---
 
@@ -102,6 +114,7 @@ Consumer and corporate apps call different **URL bases** on the same gateway tec
 
 | Audience | Link |
 | -------- | ---- |
+| **Segment overview (retail, business, foreign)** | [Masarat customer segments](../getting-started/masarat-customer-segments.md) |
 | Security and onboarding abuse | [Onboarding channel hardening](../security/onboarding-channel-hardening.md) |
 | KYC templates, validation, staff approval | [KYC flow, validation & portal approval](./kyc-flow-validation-and-portal-approval.md) |
 | Engineers — gateway host and headers | [Customer Gateway service reference](../reference/service-reference/Masarat.Gateway.Customer.Api.reference.md) |
