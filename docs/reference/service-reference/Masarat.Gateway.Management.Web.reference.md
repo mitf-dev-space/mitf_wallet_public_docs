@@ -33,6 +33,15 @@ Hosts **ASP.NET Core Identity** (staff users) + **`management_staff_audit_events
 | `ManagementGateway:SeedAdmin:Enabled` | `bool` | `false` | Seed initial admin on startup. |
 | `ManagementGateway:SeedAdmin:Email` | `string?` | — | Admin email when seeding. |
 | `ManagementGateway:SeedAdmin:Password` | `string?` | — | Admin password when seeding. |
+| `ManagementGateway:OutboundEmail:Enabled` | `bool` | `false` | Master switch for SMTP credential emails. When `false`, sends are skipped and logged. |
+| `ManagementGateway:OutboundEmail:Host` | `string?` | `smtp.example.com` | SMTP relay hostname (required when enabled). |
+| `ManagementGateway:OutboundEmail:Port` | `int` | `587` | SMTP port. |
+| `ManagementGateway:OutboundEmail:UseStartTls` | `bool` | `true` | Use STARTTLS; when `false` MailKit auto-negotiates. |
+| `ManagementGateway:OutboundEmail:Username` | `string?` | — | Optional SMTP auth user. |
+| `ManagementGateway:OutboundEmail:Password` | `string?` | — | Optional SMTP auth password (treat as a secret). |
+| `ManagementGateway:OutboundEmail:FromEmail` | `string?` | `no-reply@masarat.example` | Required envelope/from address when enabled. |
+| `ManagementGateway:OutboundEmail:FromName` | `string?` | `Masarat Management Portal` | Optional display name; falls back to a localized default. |
+| `ManagementGateway:OutboundEmail:PublicBaseUrl` | `string?` (URL) | `https://management.example.com` | Absolute base URL used in email sign-in links. Combined with the runtime `PathBase`. |
 | `ManagementGateway:TrustForwardedHeaders` | `bool` | `true` | Honor `X-Forwarded-*`. |
 | `ManagementGateway:TrustedForwardedProxies` | `string[]` | `[]` | Known proxy IPs. |
 | `ManagementGateway:TrustedForwardedNetworks` | `string[]` | `[]` | Trusted CIDRs (e.g. `10.0.0.0/8`). |
@@ -61,6 +70,7 @@ Standard tables (see EF migrations snapshot): **`AspNetUsers`**, **`AspNetRoles`
 | `PasswordHash` / `SecurityStamp` / `ConcurrencyStamp` | `string` | text | Credentials & concurrency. |
 | `PhoneNumber` | `string?` | text | Phone. |
 | `LockoutEnabled` / `LockoutEnd` / `AccessFailedCount` | bool / DateTimeOffset? / int | — | Lockout. |
+| `MustChangePassword` | `bool` | `boolean`, default `false` | When `true`, the user is forced through `/Account/ChangePassword` before any other portal page renders. Set when an admin creates a user or resets a password; cleared when the user successfully changes it. See [Staff credential lifecycle](../../security/staff-credential-lifecycle.md). |
 
 Other Identity tables follow Microsoft’s default column shapes (`RoleId`, `UserId`, `ClaimType`, `ClaimValue`, etc.).
 

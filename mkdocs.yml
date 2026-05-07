@@ -50,6 +50,7 @@ nav:
   - Security:
       - System hardening: security/system-hardening.md
       - Onboarding channel hardening: security/onboarding-channel-hardening.md
+      - Staff credential lifecycle: security/staff-credential-lifecycle.md
   - "Compliance & offline":
       - "Offline packs (print / PDF)": compliance/offline-packs.md
   - Accessibility: accessibility.md
