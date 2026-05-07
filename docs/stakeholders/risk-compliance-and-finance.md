@@ -1,8 +1,6 @@
 # Risk, compliance & finance {: .wallet-lead }
 
-**Who this is for:** risk, compliance, **AML**, internal audit, and **finance / treasury** leaders at **Masarat**.
-
-**What this page does:** explains **how the wallet supports control and oversight** — in language suitable for committees and steering groups. Technical contracts and runbooks are linked at the end of sections for specialists.
+For Masarat risk, compliance, AML, audit, and finance/treasury leaders.
 
 ---
 

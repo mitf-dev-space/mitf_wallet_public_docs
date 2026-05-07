@@ -1,8 +1,6 @@
 # Executive & business overview {: .wallet-lead }
 
-**Who this is for:** chief executives, general managers, **commercial and product** leaders, and partnership owners at **Masarat**.
-
-**What this page does:** explains **what Masarat Wallet is as a product**, **why a bank or partner would care**, and **what is real in the product today** — without implementation jargon.
+For Masarat executive, commercial, and partnership leaders.
 
 ---
 

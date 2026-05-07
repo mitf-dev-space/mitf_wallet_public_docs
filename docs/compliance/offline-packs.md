@@ -1,20 +1,16 @@
 # Offline compliance packs (print & PDF)
 
-Use this hub when you need **Security** and **Reconciliation** chapters for an **offline** audit binder, PDF archive, or air-gapped review. The published site does not ship pre-built PDFs; you generate them in seconds from the live HTML.
-
-!!! tip "Why not a single auto-PDF in CI?"
-    High-fidelity PDF pipelines (headless Chrome, LaTeX, or commercial exporters) add weight and differ by OS and fonts. Browser **Print → Save as PDF** uses the same layout integrators see online and respects Material&rsquo;s print stylesheet.
+Print or export **Security** and **Reconciliation** chapters for offline audit binders. No pre-built PDFs ship; generate them from the live HTML using your browser's **Print → Save as PDF**.
 
 ---
 
-## Quick method (recommended)
+## Quick method
 
-1. Open the section you need in the **published site** or a local `mkdocs serve` build.
-2. Use your browser&rsquo;s print dialog (**Ctrl+P** / **⌘P**).
-3. Choose **Save as PDF** (or a virtual PDF printer).
-4. In print options, enable **Background graphics** if diagrams or code blocks must match the on-screen theme.
+1. Open the page in the published site or a local `mkdocs serve` build.
+2. **Ctrl+P** / **⌘P** → **Save as PDF**.
+3. Enable **Background graphics** if diagrams or code blocks must match the on-screen theme.
 
-Material hides navigation chrome when printing, so you get a readable single-column document.
+Material hides navigation chrome when printing — single-column output.
 
 ---
 

@@ -1,12 +1,6 @@
 # Masarat API Reference
 
-- **Documentation hub:** [Welcome & guided tours](../getting-started/welcome.md) — reading order; [full A–Z index](../getting-started/all-pages.md) — every page. [Site home](../README.md) — Masarat welcome and orientation.
-- **Platform capabilities (consistency, security):** [Platform capabilities](../architecture/platform-capabilities.md).
-- **Configuration (all apps):** [Configuration reference](configuration-reference.md).
-- **gRPC quick reference:** [gRPC services](grpc-services.md) — all RPCs and message fields.
-- **System hardening and security:** [System hardening](../security/system-hardening.md) — API key auth, wallet PIN and transaction authorization token, logging/secrets, and operational recommendations.
-- **Domain events:** [Domain events](../architecture/events.md) — RabbitMQ events published by the system.
-- **Logging (operations):** [Logging](../operations/logging.md) — structured logging, correlation ID, configuration, and runbook.
+See also: [gRPC services](grpc-services.md) · [Configuration reference](configuration-reference.md) · [System hardening](../security/system-hardening.md) · [Domain events](../architecture/events.md) · [Logging](../operations/logging.md)
 
 ## API versioning
 
@@ -14,14 +8,12 @@ This section is the **explicit contract** for how integration surfaces evolve. A
 
 ### REST (ASP.NET services)
 
-- **Path versioning:** The REST paths documented here (for example `/onboarding/accounts`, `/health`, webhook routes) are the **current** surface. They do **not** embed a `/v1` segment unless Masarat introduces URL versioning in a future release; if that happens, new paths or prefixes will be documented here and called out in release notes.
-- **OpenAPI document version:** In Development, services expose a JSON OpenAPI description at **`/openapi/v1.json`**. The `v1` segment labels the **exported spec revision** consumers can download or diff — not every individual route is required to repeat that segment in the URL.
-- **Integrator expectation:** Treat **additive** changes (new optional fields, new endpoints) as backward compatible unless release notes say otherwise. Treat **removed fields, renamed properties, new required fields, changed status codes, or semantic changes** as **breaking** — require a coordinated client and server upgrade.
-- **Headers and auth:** Changes to required headers (for example `X-Api-Key`, `Authorization`, `x-bank-id`, `Idempotency-Key`) or to JWT claims are **contract changes** and should appear in release notes.
+- **Paths** don't embed `/v1` unless URL versioning is introduced; new paths are called out in release notes.
+- **OpenAPI spec** at `/openapi/v1.json` in Development (`v1` labels the spec revision, not each route).
+- **Additive changes** (new optional fields, new endpoints) are backward-compatible. **Removed fields, renamed properties, new required fields, changed status codes** are breaking — require coordinated upgrade.
+- **Header/auth changes** (`X-Api-Key`, `x-bank-id`, `Idempotency-Key`, JWT claims) are contract changes and appear in release notes.
 
 ### Examples: non-breaking vs breaking (REST)
-
-Use these **patterns** when reviewing release notes or [Changelog & releases](../changelog.md).
 
 | Change | Verdict | Rationale |
 | ------ | ------- | --------- |
@@ -44,7 +36,7 @@ Use these **patterns** when reviewing release notes or [Changelog & releases](..
 
 ### Documentation vs binaries
 
-- **This site** ([mitf_wallet_public_docs](https://github.com/anstwechy/mitf_wallet_public_docs)) tracks the **intended** integration contract as maintained by Masarat. If production lags the docs (or vice versa), the **running service** and your **internal release notes** win until the docs are updated.
+If production lags the docs (or vice versa), the **running service** and your **internal release notes** take precedence.
 
 ---
 

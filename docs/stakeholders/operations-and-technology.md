@@ -1,8 +1,6 @@
 # Operations & technology leadership {: .wallet-lead }
 
-**Audience:** COO-style delivery leaders, CIO/CTO, heads of engineering, platform/SRE, and **infrastructure** owners at **Masarat**.
-
-This page summarizes **how the system is operated**, **how it scales**, and **what the operational surface area** is — tied to **`docker-compose.yml`**, **`Masarat.Wallet.slnx`**, and production-oriented docs.
+For Masarat COO, CIO/CTO, heads of engineering, and SRE/infrastructure owners.
 
 ---
 

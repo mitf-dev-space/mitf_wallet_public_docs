@@ -1,42 +1,40 @@
-# KYC flow, validation, dynamic behaviour, and portal approval
+# KYC flow, validation, and portal approval
 
-This page describes how **MITF Wallet** handles **Know Your Customer (KYC)** end to end: reusable **field definitions**, **templates** that bind fields with rules, **submissions** per user and template, **validation** on capture, **dynamic** coupling to **wallet classifications** and the **Customer Gateway**, and **staff approval** in **Gateway Management Web** (the bank operator portal).
+Covers **field definitions**, **templates**, **submissions**, **validation**, gateway coupling, and **staff approval** in Gateway Management Web.
 
-For **which programme** collects KYC (consumer vs corporate, including employer-led capture for staff), see [Resident and foreign customers: retail vs corporate programmes](./resident-and-foreign-gateway-personas.md). For **Users** `KycStatus` vs per-template state, see the **mitf_wallet** note `docs/solutions/kyc-user-status-vs-template.md`.
+For which programme collects KYC (consumer vs corporate), see [Resident and foreign customers](./resident-and-foreign-gateway-personas.md). For `KycStatus` vs per-template state, see `docs/solutions/kyc-user-status-vs-template.md`.
 
 ---
 
 ## Two surfaces
 
-| Surface | Role | Typical users |
-| ------- | ---- | ------------- |
-| **Customer Gateway** (`Masarat.Gateway.Customer.Api`) | Collects field values from **mobile / partner apps**; calls **KYC** gRPC with the **holder** user id. | Customers, business operators (self or **managed** employee). |
-| **Gateway Management Web** (`Masarat.Gateway.Management.Web`) | **Configures** templates and field definitions; **lists** pending submissions; **approves** or **rejects** when manual review is required. | Bank **Viewer** (read), **Operator** / **Admin** (mutations + review). |
+| Surface | Role | Users |
+| ------- | ---- | ----- |
+| **Customer Gateway** (`Masarat.Gateway.Customer.Api`) | Collects field values from mobile / partner apps; calls KYC gRPC with the holder user id | Customers, business operators |
+| **Gateway Management Web** (`Masarat.Gateway.Management.Web`) | Configures templates and field definitions; lists pending submissions; approves or rejects when manual review is required | Bank Viewer (read), Operator / Admin (mutations + review) |
 
-Apps **do not** approve submissions — they only **submit** and **poll status**. The portal is the **human review** lane when the product marks a template as needing manual review.
+Apps **submit** and **poll status** — they do not approve. The portal is the human review lane.
 
 ---
 
-## Data model: what is static vs dynamic
+## Data model
 
 ### Field definitions (catalog)
 
-- **Global dictionary** of fields: **key**, label, **data type** (`String`, `Date`, `Number`, `Boolean`), and **sensitive** flag.
-- Managed in the portal under **KYC field definitions** (`/kyc-fields`). New products add fields once; many templates can reuse the same field key.
+- Global dictionary of fields: **key**, label, **data type** (`String`, `Date`, `Number`, `Boolean`), and **sensitive** flag.
+- Managed at `/kyc-fields`. New fields are added once; multiple templates reuse the same key.
 
 ### Templates (product-specific shape)
 
-- A **template** has a stable **key** (e.g. `resident-standard`, `foreign-employer-issued`), display metadata, **`RequiresManualReview`**, **`IsActive`**, and **links** to field definitions with:
-  - **required** vs optional on *this* template,
-  - **sort order** for UI and docs.
-- Managed under **KYC templates** (`/kyc-templates`, create/edit).
+- A **template** has a stable **key** (e.g. `resident-standard`), display metadata, **`RequiresManualReview`**, **`IsActive`**, and field links with **required** / optional flags and **sort order**.
+- Managed at `/kyc-templates`.
 
-**Why call it “dynamic”:** Wallet **classifications** (configured in the same portal) point wallet products at **resident** vs **foreign** template keys and a **KYC capture mode**. When classification or template definitions change, **apps** see different `templateKey` requirements and **status** payloads without redeploying the gateway — only configuration and KYC data change.
+**Why "dynamic":** Wallet **classifications** point wallet products at resident vs foreign template keys and a **KYC capture mode**. When templates or classifications change, apps see different `templateKey` requirements without redeployment.
 
 ### Submissions (runtime state)
 
-- One logical **submission** row per **(holder user id, template id)** in the **KYC** service.
-- Stores **merged** field values across multiple partial submits, **status**, and review metadata when staff act.
+- One submission row per **(holder user id, template id)** in the KYC service.
+- Stores **merged** field values across partial submits, **status**, and review metadata.
 
 ---
 
@@ -54,9 +52,9 @@ sequenceDiagram
   KYC-->>GW: success, submissionId, status
   GW-->>App: JSON body
 
-  App->>GW: GET .../kyc/status (or /kyc/managed/status)
+  App->>GW: GET .../kyc/status
   GW->>KYC: GetKycSubmissionStatus
-  KYC-->>GW: missing keys, cleared flag, template snapshot
+  KYC-->>GW: missingKeys, cleared flag, template snapshot
   GW-->>App: drives UI / wallet creation messaging
 
   alt Template requires manual review
@@ -68,74 +66,67 @@ sequenceDiagram
 
 ---
 
-## Submission lifecycle (status)
+## Submission lifecycle
 
 | Status | Meaning |
 | ------ | ------- |
-| **Pending** | Values may be partial or complete; if **`RequiresManualReview`** is true, auto-approval never runs — stays **Pending** until staff review. |
-| **Approved** | Submission accepted (either **auto-approved** when all required fields are present and the template does **not** require manual review, or **after** staff approval). |
-| **Rejected** | Staff rejected the submission; reason stored for audit. |
+| **Pending** | Values may be partial or complete. If `RequiresManualReview` is true, auto-approval never runs — stays Pending until staff review. |
+| **Approved** | Auto-approved (all required fields present + no manual review required) or approved by staff. |
+| **Rejected** | Staff rejected; reason stored for audit. |
 
-Only **Pending** submissions can receive **ReviewKycSubmission** from the portal; attempts to review a terminal state return an error.
-
----
-
-## Validation on submit (KYC service)
-
-When **SubmitKycFields** runs, the service (conceptually):
-
-1. **Template key** — non-empty; template must **exist**.
-2. **Active template** — if **`IsActive`** is false, submit is **rejected** (no new data on deprecated templates).
-3. **Field keys** — every submitted key must belong to the template’s linked fields; unknown keys are rejected with a clear message.
-4. **First save** — at least one value is required when no row exists yet.
-5. **Merge** — new values overlay prior stored values for the same submission.
-6. **Data types** — non-empty values are checked per field definition (**number** uses invariant parsing, **date** parses common formats, **boolean** accepts standard literals and common yes/no forms).
-7. **Required completeness** — after merge, all template-required fields must be non-whitespace to **auto-approve** (when manual review is off).
-
-If validation fails, the client receives **`success: false`** and an **`error`** string suitable for display or logs.
+Only **Pending** submissions can receive `ReviewKycSubmission`; terminal states return an error.
 
 ---
 
-## Status query (dynamic for integrators)
+## Validation on submit
 
-**GetKycSubmissionStatus** (exposed through the gateway as **`GET .../kyc/status`** and **`GET .../kyc/managed/status`**) returns:
+When **SubmitKycFields** runs:
 
-- **`template`** snapshot — fields, types, required flags, **`isActive`** (so apps can grey out inactive products).
-- **`missingFieldKeys`** / **`presentFieldKeys`** — derived from required flags vs non-empty stored values.
-- **`kycCleared`** — **`true`** only when the submission is **Approved** **and** the template is still **active**. Inactive templates **never** clear KYC for downstream gates, even if an old row was approved (prevents deprecated templates from unlocking wallets).
+1. **Template key** — non-empty; template must exist and be **active**.
+2. **Field keys** — every submitted key must belong to the template's linked fields.
+3. **First save** — at least one value required when no row exists yet.
+4. **Merge** — new values overlay prior stored values.
+5. **Data types** — validated per field definition (number, date, boolean).
+6. **Required completeness** — after merge, all required fields must be non-whitespace to auto-approve (when manual review is off).
+
+Failure returns `success: false` and an `error` string.
 
 ---
 
-## Gateway coupling to wallets (“dynamic” product behaviour)
+## Status query
 
-When the gateway **creates a wallet** or evaluates provisioning, it resolves the **KYC template key** from the **wallet classification** (resident vs foreign template columns) and the holder’s **type**, then calls the KYC service.
+**`GET .../kyc/status`** returns:
 
-**`WalletKycCaptureMode`** on the classification controls how strict the gateway is:
+- **`template`** snapshot — fields, types, required flags, `isActive`.
+- **`missingFieldKeys`** / **`presentFieldKeys`** — derived from required flags vs stored values.
+- **`kycCleared`** — `true` only when submission is **Approved** and template is still **active**. Inactive templates never clear KYC, even if a prior row was approved.
 
-- **`RequireAtCreation`** — missing or uncleared KYC yields a **blocking** outcome (`missing_kyc`); wallet creation may be refused until data or approval clears the template path.
-- **Deferred modes** — the wallet may be created with a softer **`pending_kyc`** state so the user can finish KYC after the fact (exact UX depends on template and capture mode).
+---
 
-The gateway also treats the **Users** coarse **`KycStatus`** field as a **shortcut**: if it is already **`Approved`**, the resolver may treat KYC as **complete** without calling KYC for that check — integrators should still rely on **template submission** for accuracy where both exist.
+## Gateway coupling to wallets
+
+When the gateway creates a wallet, it resolves the **KYC template key** from the wallet classification and calls the KYC service.
+
+**`WalletKycCaptureMode`** controls strictness:
+
+- **`RequireAtCreation`** — missing or uncleared KYC blocks wallet creation (`missing_kyc`).
+- **Deferred modes** — wallet can be created with a `pending_kyc` state; user finishes KYC later.
+
+The gateway also treats the Users `KycStatus` field as a shortcut: if already `Approved`, the resolver may treat KYC as complete without calling the KYC service.
 
 ---
 
 ## Portal: where staff work
 
-All routes below are on **Gateway Management Web** (Blazor). Access uses **ASP.NET Core Identity** roles; **KYC review** mutations require **Operator** or **Admin** (viewers can browse where the UI allows).
+All routes are on **Gateway Management Web** (Blazor). KYC review mutations require **Operator** or **Admin**.
 
 | Route | Purpose |
 | ----- | ------- |
-| **`/kyc-review`** | **Queue** of pending submissions (`ListPendingKycSubmissions`); open a row for **detail** (`GetKycSubmissionDetail`); **Approve** or **Reject** (`ReviewKycSubmission`). Sensitive field values are **masked** in the UI. |
-| **`/kyc-templates`** | List/create/edit **templates** — keys, manual review flag, active flag, linked fields and required/sort order. |
-| **`/kyc-fields`** | Maintain **global field definitions** (keys, labels, data types, sensitive). |
+| **`/kyc-review`** | Queue of pending submissions; open detail; Approve or Reject. Sensitive field values are masked. |
+| **`/kyc-templates`** | List/create/edit templates — keys, manual review flag, active flag, linked fields. |
+| **`/kyc-fields`** | Maintain global field definitions (keys, labels, data types, sensitive flag). |
 
-Successful **approve** / **reject** actions append **staff audit** events (KYC submission entity) for later investigation alongside wallet and transaction audits.
-
----
-
-## Notifications (optional in deployment)
-
-When a submission lands in **Pending** and the product expects back-office workload, the **KYC** service can emit a **queued** notification (e.g. MassTransit) so other workers or dashboards can pick it up. Whether that is enabled depends on **mitf_wallet** infrastructure configuration — the **portal queue** still polls **list pending** for operators.
+Approve/reject actions append **staff audit** events for later investigation.
 
 ---
 
@@ -143,10 +134,10 @@ When a submission lands in **Pending** and the product expects back-office workl
 
 | Goal | Call |
 | ---- | ---- |
-| Discover required fields | `GET .../kyc/status?templateKey=...` (or managed variant with `holderUserId`). |
-| Save partial progress | `POST .../kyc/submit` with a subset of keys; repeat until `missingFieldKeys` is empty. |
-| Know if wallet can proceed | Use gateway wallet-creation response / provisioning docs — depends on **`kycCleared`** and capture mode. |
-| Staff decision | Use **Management Web** `/kyc-review`, not a public REST route on the customer gateway. |
+| Discover required fields | `GET .../kyc/status?templateKey=...` (or managed variant with `holderUserId`) |
+| Save partial progress | `POST .../kyc/submit` with a subset of keys; repeat until `missingFieldKeys` is empty |
+| Know if wallet can proceed | Use gateway wallet-creation response — depends on `kycCleared` and capture mode |
+| Staff decision | Use Management Web `/kyc-review`, not a public REST route on the customer gateway |
 
 ---
 
@@ -154,7 +145,7 @@ When a submission lands in **Pending** and the product expects back-office workl
 
 | Topic | Link |
 | ----- | ---- |
-| Retail vs corporate KYC entry points | [Resident and foreign customers: retail vs corporate programmes](./resident-and-foreign-gateway-personas.md) |
+| Retail vs corporate KYC entry points | [Resident and foreign customers](./resident-and-foreign-gateway-personas.md) |
 | KYC gRPC reference | [KYC API service reference](../reference/service-reference/Masarat.Kyc.Api.reference.md) |
 | Management portal host | [Gateway Management Web service reference](../reference/service-reference/Masarat.Gateway.Management.Web.reference.md) |
 | Onboarding and abuse | [Onboarding channel hardening](../security/onboarding-channel-hardening.md) |

@@ -1,12 +1,10 @@
 # Load test — reference runs (March 2026)
 
-Reference numbers for Docker load tests: **10k** pair (A/B), **250k** no chaos (C), **250k** chaos (D), **1M** no chaos (**E**) and **1M** chaos (**F**) — documented below. **Canonical compose files** live under **`compose/loadtest/`** (six overlays); each defines **four** Transactions worker containers + API unless noted in historical rows. Older short-run figures (~41–50 ops/s, 4k diagnostic) are superseded for stakeholder summaries.
+Docker load tests A–F: **10k** (A/B), **250k** (C/D), **1M** (E/F). Compose files under **`compose/loadtest/`** (six overlays); each uses **four** Transactions workers + API unless noted.
 
 ---
 
-## Run A — 10k enhancement-proof (no chaos)
-
-**Goal:** Stable throughput gate with **rotating destination pairing** (avoids artificial same-pair row hotspots).
+## Run A — 10k (no chaos)
 
 
 | Item                       | Value                                                                  |
@@ -36,9 +34,7 @@ Reference numbers for Docker load tests: **10k** pair (A/B), **250k** no chaos (
 
 ---
 
-## Run B — 10k final validation (with chaos)
-
-**Goal:** Resilience gate — delays, client timeouts, invalid destinations, duplicate idempotency replays.
+## Run B — 10k (with chaos)
 
 
 | Item                       | Value                                                                                                                                                                    |
@@ -81,9 +77,7 @@ Use **A** for “clean ceiling” after code/infra changes. Use **B** for idempo
 
 ---
 
-## Run C — 250k Hyper (no chaos)
-
-**Goal:** Large-scale envelope — **50k wallets** (25k source + 25k dest), **250k transfers**, no client-side chaos.
+## Run C — 250k (no chaos)
 
 
 | Item                       | Value                                                                 |
@@ -126,9 +120,7 @@ pwsh -File scripts/run-loadtests.ps1
 
 ---
 
-## Run D — 250k with chaos
-
-**Goal:** Same scale as Run C (**50k wallets, 250k transfers**) with **client-side chaos** aligned to the 10k chaos profile (5% delay, 3% timeout, 1% invalid destination, 3% duplicate idempotency replay).
+## Run D — 250k (with chaos)
 
 
 | Item                       | Value                                                                 |
@@ -235,9 +227,7 @@ Log excerpt: service **15:54:24** → transfer phase end **16:33:53**; pasted lo
 
 ---
 
-## Run E — 1M no chaos
-
-**Goal:** Tenfold scale vs Hyper — **100k wallets** (50k source + 50k dest), **1M transfers**, no client chaos, fee-aware consistency on **1000+1000** sampled wallets.
+## Run E — 1M (no chaos)
 
 
 | Item                       | Value                                                                 |
@@ -285,9 +275,9 @@ Batch job wall clock in logs spans **~21:44 → ~01:37** (UTC+2-style timestamps
 
 ---
 
-## Run F — 1M with chaos
+## Run F — 1M (with chaos)
 
-**Goal:** Same scale as Run **E** with **client-side chaos** aligned to **250k** / **10k** chaos (5% delay, 3% timeout, 1% invalid destination, 3% duplicate idempotency replay). **Current** compose: **four** Transactions workers + API (documented Run **F** below used **API + one** worker — re-benchmark with the new file).
+Same scale as Run **E** with chaos. **Current** compose: four workers + API (documented run used API + one worker — re-benchmark with the new file).
 
 
 | Item                       | Value                                                                 |

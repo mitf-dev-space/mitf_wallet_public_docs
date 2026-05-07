@@ -1,6 +1,6 @@
 # Configuration reference
 
-This document lists configuration for each runnable application in the solution: JSON sections, what they control, and how to override them in deployment.
+JSON sections, env var overrides, and per-service configuration for all runnable applications.
 
 **Convention — environment variables:** ASP.NET Core maps nested JSON to env vars with `__` (double underscore), e.g. `ConnectionStrings__Ledger`, `LedgerGrpc__Address`, `CustomerGateway__Downstream__UsersBaseUrl`.
 
@@ -243,9 +243,4 @@ Use a dedicated RabbitMQ user/vhost in production and enable TLS (`UseSsl=true`)
 
 ---
 
-## Related documentation
-
-- [Production deployment](../operations/production-deployment.md) — ports, pools, production baselines  
-- [System hardening](../security/system-hardening.md) — API keys, PIN, tokens  
-- [Logging](../operations/logging.md) — log sinks and correlation  
-- [Platform capabilities](../architecture/platform-capabilities.md) — how settings relate to durability and backpressure  
+See also: [Production deployment](../operations/production-deployment.md) · [System hardening](../security/system-hardening.md) · [Logging](../operations/logging.md) · [Platform capabilities](../architecture/platform-capabilities.md)

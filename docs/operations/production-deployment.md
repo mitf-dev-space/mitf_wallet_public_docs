@@ -2,8 +2,6 @@
 
 Sizing, ports, network, secrets, config. Audience: deployment, security, network.
 
-**Also:** [Welcome & guided tours](../getting-started/welcome.md), [Full A–Z index](../getting-started/all-pages.md), [Configuration reference](../reference/configuration-reference.md), [Platform capabilities](../architecture/platform-capabilities.md), [System hardening](../security/system-hardening.md), [API](../reference/api.md), [gRPC services](../reference/grpc-services.md), [Logging](logging.md), [Reconciliation & consistency runbook](reconciliation-and-consistency-runbook.md), [Load testing operations](load-testing-operations.md), [Load test reference runs](../load-testing/load-test-reference-runs.md), [Transfer backpressure](../architecture/transfer-backpressure-client-contract.md)
-
 ---
 
 ## 1. Architecture Summary
@@ -355,20 +353,13 @@ Flow: clients → **Transactions** → **Wallets** + **Ledger** + **Postgres** +
 
 ---
 
-## 11. Document Index
+## 11. Related docs
 
-
-| Document                                                                                 | Audience                      | Content                                                 |
-| ---------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------- |
-| [Welcome & guided tours](../getting-started/welcome.md) | All | Reading order and role paths into this site |
-| [Full A–Z index](../getting-started/all-pages.md) | All | Flat list of every page |
-| [Production deployment](production-deployment.md) | Deployment, Security, Network | Sizing, network, secrets, load (this file) |
-| [System hardening](../security/system-hardening.md) | Security, Ops | API key, PIN, token, logging, TLS, secrets |
-| [API](../reference/api.md) | Developers, Integration | REST/gRPC reference, auth, bank context |
-| [gRPC services](../reference/grpc-services.md) | Developers | gRPC RPCs and ports |
-| [Logging](logging.md) | Ops | Logging, correlation ID, runbooks |
-| [Financial operations](../reconciliation/financial-operations-and-reconciliation.md) | Ops, Finance | Flows, reversal, reconciliation |
-| [Load test reference runs](../load-testing/load-test-reference-runs.md) | Ops, Platform | Reference load-test scenarios, observed results, and comparison notes |
-| [Transfer backpressure](../architecture/transfer-backpressure-client-contract.md) | Integrators, Ops | Behavior under API saturation |
+- [Configuration reference](../reference/configuration-reference.md)
+- [System hardening](../security/system-hardening.md)
+- [Logging](logging.md)
+- [Reconciliation & consistency runbook](reconciliation-and-consistency-runbook.md)
+- [Transfer backpressure](../architecture/transfer-backpressure-client-contract.md)
+- [Load test reference runs](../load-testing/load-test-reference-runs.md)
 
 

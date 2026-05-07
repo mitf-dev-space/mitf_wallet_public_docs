@@ -1,14 +1,12 @@
 # Money movement — sequence diagrams
 
-This page collects **sequence diagrams** for every **financial journey** the MITF Wallet platform supports. It complements the numeric ledger examples in [Transaction flows & ledger examples](transaction-flows-and-ledger-examples.md) and the step tables in [Financial operations & reconciliation](../reconciliation/financial-operations-and-reconciliation.md).
+Sequence diagrams for every financial journey. Complements [Transaction flows & ledger examples](transaction-flows-and-ledger-examples.md) and [Financial operations & reconciliation](../reconciliation/financial-operations-and-reconciliation.md).
 
-**Source alignment:** Diagrams follow the **Key Flows** section and bounded-context behaviour in the main **`mitf_wallet`** repository `README.md` (local path `mitf_wallet/README.md`).
+**Source alignment:** diagrams follow the **Key Flows** section in the main `mitf_wallet` repository README.
 
 ---
 
 ## 1. Onboarding — register user and create wallet
-
-Same as **Onboarding** in the main repo: one REST call creates the user, then **Users** creates the wallet via **Wallets**; **Wallets** opens the ledger account and publishes `WalletCreatedEvent`.
 
 ```mermaid
 sequenceDiagram
@@ -38,14 +36,12 @@ sequenceDiagram
 
 ---
 
-## 2. Wallet creation (direct call — detail)
-
-When any **caller** (Users, Gateway, load test job) invokes **CreateWallet** without the full onboarding REST path.
+## 2. Wallet creation (direct call)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Caller as Caller
+    participant Caller
     participant W as Wallets API
     participant L as Ledger API
     participant DW as DB MasaratWallets
@@ -64,7 +60,7 @@ sequenceDiagram
 
 ## 3. P2P transfer (wallet to wallet)
 
-**Transfer** on **Transactions API**: balance and fee rules, optional **transaction_authorization_token** when the wallet classification requires PIN (see section 8).
+`Transfer` on **Transactions API**: balance and fee rules, optional `transaction_authorization_token` when classification requires PIN.
 
 ```mermaid
 sequenceDiagram
@@ -99,7 +95,7 @@ sequenceDiagram
 
 ## 4. Fund wallet (top-up)
 
-**FundWallet**: single **PostEntry** — credit to the wallet liability. Matching **bank / current account** debit is outside this ledger (external).
+**FundWallet**: single `PostEntry` — credit to the wallet liability. Bank/current account debit is external.
 
 ```mermaid
 sequenceDiagram
@@ -122,7 +118,7 @@ sequenceDiagram
 
 ## 5. Merchant payment
 
-**ProcessMerchantPayment**: debit customer wallet, credit **merchant settlement** (+ fee revenue leg when configured).
+**ProcessMerchantPayment**: debit customer wallet, credit merchant settlement (+ fee revenue leg when configured).
 
 ```mermaid
 sequenceDiagram
@@ -153,7 +149,7 @@ sequenceDiagram
 
 ## 6. Cash withdrawal
 
-**ProcessCashWithdrawal**: debit wallet, credit **cash settlement** (+ optional fee leg).
+**ProcessCashWithdrawal**: debit wallet, credit cash settlement (+ optional fee leg).
 
 ```mermaid
 sequenceDiagram
@@ -184,7 +180,7 @@ sequenceDiagram
 
 ## 7. Fund wallet from pooled account
 
-**FundWalletFromPooledAccount**: **PostJournal** debits **pool liability**, credits **wallet liability** (institution pool → customer wallet).
+**FundWalletFromPooledAccount**: `PostJournal` debits pool liability, credits wallet liability.
 
 ```mermaid
 sequenceDiagram
@@ -205,9 +201,9 @@ sequenceDiagram
 
 ---
 
-## 8. Wallet PIN and transaction authorization (before debits)
+## 8. Wallet PIN and transaction authorization
 
-Applies before **Transfer**, **FundWallet** (when treated as debit path with token — see hardening docs), **ProcessMerchantPayment**, and **ProcessCashWithdrawal** when **OperationAuthMode** requires user PIN.
+Applies before **Transfer**, **ProcessMerchantPayment**, and **ProcessCashWithdrawal** when `OperationAuthMode` requires user PIN.
 
 ```mermaid
 sequenceDiagram
@@ -217,7 +213,7 @@ sequenceDiagram
     participant T as Transactions API
     participant DW as DB MasaratWallets
 
-    Note over App,DW: One-time set or change PIN
+    Note over App,DW: Set or change PIN
     App->>+W: gRPC SetWalletPin
     W->>DW: Store PIN hash
     W-->>-App: success
@@ -243,9 +239,9 @@ sequenceDiagram
 
 ---
 
-## 9. Reverse transaction (P2P, merchant, or withdrawal)
+## 9. Reverse transaction
 
-**ReverseTransaction** posts a **balancing PostJournal** for a **Completed** transaction. **Fund wallet** and **fund from pool** are **not** reversed through this API (per finance reference).
+**ReverseTransaction** posts a balancing `PostJournal` for a Completed transaction. FundWallet and FundFromPool are **not** reversible through this API.
 
 ```mermaid
 sequenceDiagram
@@ -268,10 +264,10 @@ sequenceDiagram
 
 ---
 
-## Diagram index (quick lookup)
+## Diagram index
 
-| Flow | API / entry | Ledger call | Domain event (on success) |
-| ---- | ----------- | ----------- | --------------------------- |
+| Flow | API / entry | Ledger call | Domain event |
+| ---- | ----------- | ----------- | ------------ |
 | Onboarding | Users `POST /onboarding/accounts` | CreateAccountsForWallet | WalletCreatedEvent (from Wallets) |
 | Create wallet | Wallets CreateWallet | CreateAccountsForWallet | WalletCreatedEvent |
 | P2P | Transactions Transfer | PostJournal | TransferCompletedEvent |
@@ -283,9 +279,7 @@ sequenceDiagram
 
 ---
 
-## Further reading
-
-- [Financial operations & reconciliation](../reconciliation/financial-operations-and-reconciliation.md) — business narrative and reconciliation  
-- [Transaction flows & ledger examples](transaction-flows-and-ledger-examples.md) — worked ledger leg tables  
-- [Domain events](events.md) — event contracts  
-- [gRPC reference](../reference/grpc-services.md) — RPC listing
+- [Financial operations & reconciliation](../reconciliation/financial-operations-and-reconciliation.md)
+- [Transaction flows & ledger examples](transaction-flows-and-ledger-examples.md)
+- [Domain events](events.md)
+- [gRPC reference](../reference/grpc-services.md)
