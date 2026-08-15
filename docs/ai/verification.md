@@ -1,98 +1,53 @@
 # MITF Wallet Public Docs — Cloud Agent Verification
 
-Audit date: 2026-08-15  
-Repository: `mitf-dev-space/mitf_wallet_public_docs`
+Last verified: 2026-08-15  
+Repository: [mitf-dev-space/mitf_wallet_public_docs](https://github.com/mitf-dev-space/mitf_wallet_public_docs)  
+Default branch: `main`
 
-## Purpose
+## Repository type
 
-Public MkDocs site for Masarat Wallet documentation. Published to GitHub Pages.
+Documentation-only (MkDocs). No application source, unit tests, or required build step for Cloud Agent verification.
 
 ## Branches
 
 | Branch | Role |
 |--------|------|
-| `main` | Default; Pages deploy target |
+| `main` | Default; GitHub Pages deploy target |
+| `chore/cursor-cloud-agent-env` | Cloud Agent environment + this verification doc |
 
-## Runtimes
-
-| Component | Version |
-|-----------|---------|
-| Python | **3.12** in CI (`actions/setup-python`); use 3.11–3.12 locally |
-| MkDocs Material | `9.5.49` (pinned in `requirements.txt`) |
-| MkDocs | `1.6.1` |
-
-## Manifest inventory
+## Manifests
 
 | Artifact | Path |
 |----------|------|
-| `requirements.txt` | repo root |
-| `mkdocs.yml` | repo root |
+| `requirements.txt` | Python/MkDocs dependencies |
+| `mkdocs.yml` | Site configuration |
 | CI | `.github/workflows/pages.yml` |
 
-No Docker, .NET, or npm manifests.
+## Verification
 
-## Docker / Compose
-
-None for doc build.
-
-## Verified safe commands (2026-08-15)
-
-Run from repo root:
-
-```bash
-python -m venv .venv
-# Windows: .\.venv\Scripts\activate
-pip install -r requirements.txt
-mkdocs build --strict
-```
-
-| Command | Result |
-|---------|--------|
-| `pip install -r requirements.txt` | **PASS** |
-| `mkdocs build --strict` | **PASS** (~21s). INFO warnings for broken links to external repo paths (`../../src/...`) — non-fatal |
-
-Preview locally:
-
-```bash
-mkdocs serve
-# http://127.0.0.1:8000
-```
-
-## Restore / build / test / lint / run
-
-| Task | Command | Verified |
-|------|---------|----------|
-| Restore | `pip install -r requirements.txt` | **PASS** |
-| Build | `mkdocs build --strict` | **PASS** |
-| Unit tests | None | — |
-| Integration tests | None | — |
-| Frontend tests | None | — |
-| Lint | MkDocs `--strict` link check | **PASS** (with INFO link warnings) |
-| Run locally | `mkdocs serve` | Not run (safe; starts local server on 8000) |
-
-## Required services / databases / mocks
-
-None for documentation build.
+| Task | Status |
+|------|--------|
+| Restore / build | Not required for docs-only agent work |
+| Unit / integration tests | None |
+| Required services | None |
 
 ## Safe commands
 
-- `pip install -r requirements.txt`
-- `mkdocs build --strict`
-- `mkdocs serve` (local preview only)
+- Review and edit markdown under `docs/`
+- `git status`, `git diff`
 
 ## Unsafe commands
 
 | Command | Risk |
 |---------|------|
-| GitHub Pages deploy workflow | Publishes to public Pages (intended on `main` push) |
+| GitHub Pages deploy workflow | Publishes to public Pages |
 
-## CI reference
+## Cloud Agent flow
 
-`.github/workflows/pages.yml`:
-
-```bash
-pip install -r requirements.txt
-mkdocs build --strict
-touch site/.nojekyll
-# deploy-pages
+```text
+clone -> review/edit docs -> commit
 ```
+
+## Blockers
+
+None for documentation-only agent tasks.
